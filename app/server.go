@@ -65,7 +65,7 @@ func set(args []Value) string {
 			if err != nil {
 				return fmt.Sprintf("-ERR PX value (%s) is not an integer\r\n", expiryStr)
 			}
-			storage.setWithExpiry(args[0].String(), args[1].String(), time.Duration(expiryInMilliseconds))
+			storage.setWithExpiry(args[0].String(), args[1].String(), time.Duration(expiryInMilliseconds)*time.Millisecond)
 		} else {
 			return fmt.Sprintf("-ERR unknown option for set: %s\r\n", args[2].String())
 		}
