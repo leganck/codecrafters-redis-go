@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strconv"
+	"time"
 )
 
 var storage = NewStorage()
@@ -45,13 +47,39 @@ func handleConnection(conn net.Conn) {
 		case "echo":
 			conn.Write([]byte(fmt.Sprintf("$%d\r\n%s\r\n", len(args[0].String()), args[0].String())))
 		case "set":
-			storage.Set(args[0].String(), args[1].String())
-			conn.Write([]byte("+OK\r\n"))
+			conn.Write([]byte(set(args)))
 		case "get":
-			conn.Write([]byte(fmt.Sprintf("+%s\r\n", storage.Get(args[0].String()))))
+			conn.Write([]byte(get(args)))
 		default:
 			conn.Write([]byte("-ERR unknown command '" + command + "'\r\n"))
 		}
 	}
 
+}
+
+func set(args []Value) string {
+	if len(args) > 2 {
+		if args[2].String() == "px" {
+			expiryStr := args[3].String()
+			expiryInMilliseconds, err := strconv.Atoi(expiryStr)
+			if err != nil {
+				return fmt.Sprintf("-ERR PX value (%s) is not an integer\r\n", expiryStr)
+			}
+			storage.setWithExpiry(args[0].String(), args[1].String(), time.Duration(expiryInMilliseconds))
+		} else {
+			return fmt.Sprintf("-ERR unknown option for set: %s\r\n", args[2].String())
+		}
+	} else {
+		storage.Set(args[0].String(), args[1].String())
+	}
+	return "+OK\r\n"
+}
+
+func get(args []Value) string {
+	value, found := storage.Get(args[0].String())
+	if found {
+		return fmt.Sprintf("$%d\r\n%s\r\n", len(value), value)
+	} else {
+		return "$-1\r\n"
+	}
 }
