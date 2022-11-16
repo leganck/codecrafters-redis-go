@@ -41,11 +41,11 @@ func DecodeRESP(byteStream *bufio.Reader) (Value, error) {
 		return Value{}, err
 	}
 	switch string(dataTypeByte) {
-	case SimpleString:
+	case string(SimpleString):
 		return decodeSimpleString(byteStream)
-	case BulkString:
+	case string(BulkString):
 		return decodeBulkString(byteStream)
-	case Array:
+	case string(Array):
 		return decodeArray(byteStream)
 	}
 	return Value{}, fmt.Errorf("invalid RESP data type byte: %s", string(dataTypeByte))
